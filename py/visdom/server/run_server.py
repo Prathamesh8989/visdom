@@ -26,7 +26,6 @@ from visdom.server.defaults import (
 from visdom.server.build import download_scripts
 from visdom.utils.server_utils import hash_password, set_cookie
 
-
 def start_server(
     port=DEFAULT_PORT,
     hostname=DEFAULT_HOSTNAME,
@@ -39,6 +38,21 @@ def start_server(
     bind_local=False,
     eager_data_loading=False,
 ):
+    # -------------------------
+    # Auto-create user/style.css
+    # -------------------------
+    user_dir = os.path.join(os.getcwd(), "user")
+    if not os.path.exists(user_dir):
+        os.makedirs(user_dir)
+
+    style_file = os.path.join(user_dir, "style.css")
+    if not os.path.exists(style_file):
+        with open(style_file, "w") as f:
+            f.write("/* user style.css created automatically */\n")
+    
+    # -------------------------
+    # Start server
+    # -------------------------
     print("It's Alive!")
     app = Application(
         port=port,
@@ -58,12 +72,12 @@ def start_server(
 
     if "HOSTNAME" in os.environ and hostname == DEFAULT_HOSTNAME:
         hostname = os.environ["HOSTNAME"]
-    else:
-        hostname = hostname
+
     if print_func is None:
-        print("You can navigate to http://%s:%s%s" % (hostname, port, base_url))
+        print(f"You can navigate to http://{hostname}:{port}{base_url}")
     else:
         print_func(port)
+
     ioloop.IOLoop.instance().start()
     app.subs = []
     app.sources = []
