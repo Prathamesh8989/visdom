@@ -26,6 +26,7 @@ from visdom.server.defaults import (
 from visdom.server.build import download_scripts
 from visdom.utils.server_utils import hash_password, set_cookie
 
+
 def start_server(
     port=DEFAULT_PORT,
     hostname=DEFAULT_HOSTNAME,
@@ -39,21 +40,25 @@ def start_server(
     eager_data_loading=False,
 ):
     # -------------------------
-    # Auto-create user/style.css
+    # Auto-create user/style.css in env_path
     # -------------------------
-    user_dir = os.path.join(os.getcwd(), "user")
-    if not os.path.exists(user_dir):
-        os.makedirs(user_dir)
+    user_dir = os.path.join(env_path, "user")
+    os.makedirs(user_dir, exist_ok=True)
 
-    style_file = os.path.join(user_dir, "style.css")
-    if not os.path.exists(style_file):
-        with open(style_file, "w") as f:
-            f.write("/* user style.css created automatically */\n")
-    
+    css_path = os.path.join(user_dir, "style.css")
+    if not os.path.exists(css_path):
+        with open(css_path, "w", encoding="utf-8") as f:
+            f.write(
+                "/* user style.css created automatically */\n"
+                "body {\n"
+                "    background-color: #f5f5f5;\n"
+                "    font-family: Arial, sans-serif;\n"
+                "}\n"
+            )
+
     # -------------------------
     # Start server
     # -------------------------
-    print("It's Alive!")
     app = Application(
         port=port,
         base_url=base_url,
@@ -63,10 +68,12 @@ def start_server(
         use_frontend_client_polling=use_frontend_client_polling,
         eager_data_loading=eager_data_loading,
     )
+
     if bind_local:
         app.listen(port, max_buffer_size=1024**3, address="127.0.0.1")
     else:
         app.listen(port, max_buffer_size=1024**3)
+
     logging.info("Application Started")
     logging.info(f"Working directory: {os.path.abspath(env_path)}")
 
@@ -81,7 +88,6 @@ def start_server(
     ioloop.IOLoop.instance().start()
     app.subs = []
     app.sources = []
-
 
 def main(print_func=None):
     """
