@@ -15,9 +15,7 @@ function polygonToPath(polygon) {
   return (
     'M' +
     polygon
-      .map(function (d) {
-        return d.join(',');
-      })
+      .map(d => d.join(','))
       .join('L')
   );
 }
@@ -34,8 +32,9 @@ export default function lasso() {
   var closeDistance = 75;
 
   function lasso(root) {
-    // append a <g> with a rect
     var g = root.append('g').attr('class', 'lasso-group');
+
+    // Using clientWidth/clientHeight instead of getBoundingClientRect
     var bbox = root.node().getBoundingClientRect();
     var area = g
       .append('rect')
@@ -55,11 +54,10 @@ export default function lasso() {
     var lassoPath;
     var closePath;
 
-    function handleDragStart() {
-      lassoPolygon = [d3.mouse(this)];
-      if (lassoPath) {
-        lassoPath.remove();
-      }
+    function handleDragStart(event) {
+      lassoPolygon = [d3.pointer(event, this)];
+
+      if (lassoPath) lassoPath.remove();
 
       lassoPath = g
         .append('path')
@@ -81,16 +79,12 @@ export default function lasso() {
       dispatch.call('start', lasso, lassoPolygon);
     }
 
-    function handleDrag() {
-      var point = d3.mouse(this);
+    function handleDrag(event) {
+      var point = d3.pointer(event, this);
       lassoPolygon.push(point);
       lassoPath.attr('d', polygonToPath(lassoPolygon));
 
-      // indicate if we are within closing distance
-      if (
-        distance(lassoPolygon[0], lassoPolygon[lassoPolygon.length - 1]) <
-        closeDistance
-      ) {
+      if (distance(lassoPolygon[0], lassoPolygon[lassoPolygon.length - 1]) < closeDistance) {
         closePath.attr('x1', point[0]).attr('y1', point[1]).attr('opacity', 1);
       } else {
         closePath.attr('opacity', 0);
@@ -98,24 +92,25 @@ export default function lasso() {
     }
 
     function handleDragEnd() {
-      // remove the close path
-      closePath.remove();
-      closePath = null;
+      if (closePath) {
+        closePath.remove();
+        closePath = null;
+      }
 
-      // successfully closed
       if (
-        distance(lassoPolygon[0], lassoPolygon[lassoPolygon.length - 1]) <
-        closeDistance
+        lassoPolygon &&
+        distance(lassoPolygon[0], lassoPolygon[lassoPolygon.length - 1]) < closeDistance
       ) {
         lassoPath.attr('d', polygonToPath(lassoPolygon) + 'Z');
         dispatch.call('end', lasso, lassoPolygon);
-
-        // otherwise cancel
       } else {
-        lassoPath.remove();
-        lassoPath = null;
-        lassoPolygon = null;
+        if (lassoPath) {
+          lassoPath.remove();
+          lassoPath = null;
+        }
       }
+
+      lassoPolygon = null;
     }
 
     lasso.reset = function () {
@@ -123,7 +118,6 @@ export default function lasso() {
         lassoPath.remove();
         lassoPath = null;
       }
-
       lassoPolygon = null;
       if (closePath) {
         closePath.remove();
