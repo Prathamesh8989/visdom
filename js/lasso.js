@@ -34,7 +34,7 @@ export default function lasso() {
   function lasso(root) {
     var g = root.append('g').attr('class', 'lasso-group');
 
-    // Using clientWidth/clientHeight instead of getBoundingClientRect
+    // Get the bounding box of the root node for the interaction area
     var bbox = root.node().getBoundingClientRect();
     var area = g
       .append('rect')
@@ -80,6 +80,9 @@ export default function lasso() {
     }
 
     function handleDrag(event) {
+      // If reset() was called mid-drag, lassoPolygon or lassoPath may be null; bail out safely.
+      if (!lassoPolygon || !lassoPath) return;
+
       var point = d3.pointer(event, this);
       lassoPolygon.push(point);
       lassoPath.attr('d', polygonToPath(lassoPolygon));
